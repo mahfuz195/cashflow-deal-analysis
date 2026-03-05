@@ -4,6 +4,7 @@ import { CalculatorTab } from '@/components/CalculatorTab';
 import { RentEstimatorTab } from '@/components/RentEstimatorTab';
 import { SavedTab } from '@/components/SavedTab';
 import { SettingsTab } from '@/components/SettingsTab';
+import { DealCoach } from '@/components/DealCoach';
 import { useCalculator } from '@/hooks/useCalculator';
 import { SavedCalculation } from '@/types/calculator';
 
@@ -65,6 +66,7 @@ function AppContent() {
       {activeTab === 'rent-estimator' && <RentEstimatorTab onUseRent={handleUseRent} />}
       {activeTab === 'saved' && <SavedTab saved={saved} onLoad={handleLoad} onDelete={handleDelete} />}
       {activeTab === 'settings' && <SettingsTab state={calculator.state} updateField={calculator.updateField} onReset={calculator.resetState} />}
+      <DealCoach calculatorState={calculator.state} updateField={calculator.updateField} />
     </>
   );
 }
