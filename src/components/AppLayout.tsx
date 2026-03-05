@@ -56,7 +56,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
           <div className="p-4 border-t border-sidebar-border">
-            <p className="text-xs text-muted-foreground text-center">CashFlow v1.0</p>
+            <p className="text-xs text-muted-foreground text-center">CashFlow v1.1</p>
           </div>
         </aside>
 
