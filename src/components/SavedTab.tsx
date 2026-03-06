@@ -1,15 +1,18 @@
 import { SavedCalculation } from '@/types/calculator';
-import { Trash2, ArrowRight, Bookmark } from 'lucide-react';
+import { Trash2, ArrowRight, Bookmark, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SavedTabProps {
   saved: SavedCalculation[];
   onLoad: (calc: SavedCalculation) => void;
   onDelete: (id: string) => void;
+  loading?: boolean;
 }
 
-export function SavedTab({ saved, onLoad, onDelete }: SavedTabProps) {
+export function SavedTab({ saved, onLoad, onDelete, loading = false }: SavedTabProps) {
+  const { user, openAuthDialog } = useAuth();
+
   const ratingColors: Record<string, string> = {
     Excellent: 'text-success',
     Good: 'text-success',
@@ -21,7 +24,25 @@ export function SavedTab({ saved, onLoad, onDelete }: SavedTabProps) {
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
       <h1 className="text-xl md:text-2xl font-bold text-foreground">Saved Calculations</h1>
 
-      {saved.length === 0 ? (
+      {!user ? (
+        <div className="bg-card rounded-lg border border-border p-12 text-center space-y-4">
+          <Bookmark className="w-10 h-10 text-muted-foreground mx-auto" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-foreground">Sign in to save your deals</p>
+            <p className="text-xs text-muted-foreground">Create an account to save, revisit, and compare your calculations.</p>
+          </div>
+          <button
+            onClick={openAuthDialog}
+            className="px-5 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+          >
+            Sign In / Create Account
+          </button>
+        </div>
+      ) : loading ? (
+        <div className="bg-card rounded-lg border border-border p-12 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
+        </div>
+      ) : saved.length === 0 ? (
         <div className="bg-card rounded-lg border border-border p-12 text-center space-y-3">
           <Bookmark className="w-10 h-10 text-muted-foreground mx-auto" />
           <p className="text-sm text-muted-foreground">No saved calculations yet.</p>
@@ -52,7 +73,6 @@ export function SavedTab({ saved, onLoad, onDelete }: SavedTabProps) {
                   onClick={e => {
                     e.stopPropagation();
                     onDelete(calc.id);
-                    toast.success('Calculation deleted');
                   }}
                   className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                 >
