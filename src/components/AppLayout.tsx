@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Calculator, Home, Bookmark, Settings, DollarSign } from 'lucide-react';
+import { Calculator, Home, Bookmark, Settings, DollarSign, LogOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 type Tab = 'calculator' | 'rent-estimator' | 'saved' | 'settings';
 
@@ -22,18 +23,31 @@ const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [activeTab, setActiveTab] = useState<Tab>('calculator');
+  const { user, signOut, openAuthDialog } = useAuth();
 
   return (
     <AppLayoutContext.Provider value={{ activeTab, setActiveTab }}>
       <div className="flex h-screen overflow-hidden bg-background">
         {/* Desktop Sidebar */}
         <aside className="hidden md:flex flex-col w-64 border-r border-sidebar-border bg-sidebar shrink-0">
-          <div className="flex items-center gap-2.5 px-6 py-5 border-b border-sidebar-border">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-primary-foreground" />
+          {/* Sidebar Header: Logo + Sign In / User */}
+          <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-lg font-bold text-foreground tracking-tight">CashFlow</span>
             </div>
-            <span className="text-lg font-bold text-foreground tracking-tight">CashFlow</span>
+            {!user && (
+              <button
+                onClick={openAuthDialog}
+                className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+              >
+                Sign In
+              </button>
+            )}
           </div>
+
           <nav className="flex-1 p-3 space-y-1">
             {tabs.map(tab => {
               const Icon = tab.icon;
@@ -55,15 +69,54 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-          <div className="p-4 border-t border-sidebar-border">
-            <p className="text-xs text-muted-foreground text-center">CashFlow v1.1</p>
-          </div>
+
+          {/* Sidebar Footer */}
+          {user && (
+            <div className="p-4 border-t border-sidebar-border space-y-3">
+              <p className="text-xs text-muted-foreground truncate" title={user.email}>{user.email}</p>
+              <button
+                onClick={signOut}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                Log Out
+              </button>
+            </div>
+          )}
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Mobile Top Header */}
+          <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+                <DollarSign className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <span className="text-base font-bold text-foreground tracking-tight">CashFlow</span>
+            </div>
+            {user ? (
+              <button
+                onClick={signOut}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted transition-colors"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span className="max-w-[120px] truncate">{user.email}</span>
+              </button>
+            ) : (
+              <button
+                onClick={openAuthDialog}
+                className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+              >
+                Sign In
+              </button>
+            )}
+          </header>
+
+          <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+            {children}
+          </main>
+        </div>
 
         {/* Mobile Bottom Tab Bar */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border flex z-50">

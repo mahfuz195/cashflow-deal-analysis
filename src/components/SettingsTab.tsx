@@ -2,8 +2,9 @@ import { CalculatorState, defaultState } from '@/types/calculator';
 import { CurrencyInput } from './CurrencyInput';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SettingsTabProps {
   state: CalculatorState;
@@ -12,6 +13,8 @@ interface SettingsTabProps {
 }
 
 export function SettingsTab({ state, updateField, onReset }: SettingsTabProps) {
+  const { user, signOut } = useAuth();
+
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
       <h1 className="text-xl md:text-2xl font-bold text-foreground">Settings</h1>
@@ -49,6 +52,15 @@ export function SettingsTab({ state, updateField, onReset }: SettingsTabProps) {
       >
         <RotateCcw className="w-4 h-4 mr-1.5" /> Reset to Defaults
       </Button>
+
+      {/* Account section — visible on mobile where sidebar is hidden */}
+      <div className="md:hidden bg-card rounded-lg border border-border p-5 space-y-3">
+        <h3 className="text-sm font-bold text-foreground">Account</h3>
+        {user && <p className="text-xs text-muted-foreground truncate">{user.email}</p>}
+        <Button variant="outline" onClick={signOut} className="w-full">
+          <LogOut className="w-4 h-4 mr-1.5" /> Log Out
+        </Button>
+      </div>
     </div>
   );
 }

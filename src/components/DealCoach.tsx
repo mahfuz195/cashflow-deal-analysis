@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { MessageCircle, X, Send, Bot, User, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ type Msg = { role: 'user' | 'assistant'; content: string };
 interface DealCoachProps {
   calculatorState: CalculatorState;
   updateField: <K extends keyof CalculatorState>(field: K, value: CalculatorState[K]) => void;
+  onOpenRef?: (openFn: () => void) => void;
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
@@ -120,8 +121,12 @@ function stripApplyBlocks(content: string): string {
   return content.replace(/```apply\s*\n?\s*\{[^}]+\}\s*\n?\s*```/g, '').trim();
 }
 
-export function DealCoach({ calculatorState, updateField }: DealCoachProps) {
+export function DealCoach({ calculatorState, updateField, onOpenRef }: DealCoachProps) {
   const [open, setOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    onOpenRef?.(() => setOpen(true));
+  }, [onOpenRef]);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -198,10 +203,13 @@ export function DealCoach({ calculatorState, updateField }: DealCoachProps) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 md:bottom-6 right-5 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center hover:scale-105 active:scale-95"
+          className="fixed bottom-24 md:bottom-6 right-5 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 group"
           aria-label="Open Deal Coach"
         >
-          <Sparkles className="w-6 h-6" />
+          {/* Pulse ring */}
+          <span className="absolute inset-0 rounded-full bg-primary opacity-30 animate-ping group-hover:opacity-0" />
+          <Sparkles className="w-5 h-5 shrink-0 relative" />
+          <span className="text-sm font-semibold relative hidden sm:inline">Deal Advisor</span>
         </button>
       )}
 
@@ -232,8 +240,8 @@ export function DealCoach({ calculatorState, updateField }: DealCoachProps) {
               <Sparkles className="w-4.5 h-4.5 text-primary" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-foreground">Deal Coach</h2>
-              <p className="text-[10px] text-muted-foreground">AI Investment Advisor</p>
+              <h2 className="text-sm font-bold text-foreground">Deal Advisor</h2>
+              <p className="text-[10px] text-muted-foreground">AI Investment Analysis</p>
             </div>
           </div>
           <button
