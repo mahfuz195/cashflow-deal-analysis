@@ -77,7 +77,7 @@ export interface SavedCalculation {
 }
 
 export const defaultState: CalculatorState = {
-  purchasePrice: 200000,
+  purchasePrice: 100000,
   improvements: 0,
   closingCosts: 10000,
   downPaymentPercent: 20,
@@ -88,7 +88,7 @@ export const defaultState: CalculatorState = {
   vacancyRate: 5,
   annualRentIncrease: 2,
   propertyTaxes: 2400,
-  insurance: 1200,
+  insurance: 800,
   maintenanceCapex: 2000,
   propertyManagementFee: 8,
   hoa: 0,
