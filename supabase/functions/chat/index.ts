@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are CashFlow Deal Coach — an expert real estate investment advisor embedded in the CashFlow rental property analyzer.
+const SYSTEM_PROMPT = `You are Deal Wise Rent Deal Coach — an expert real estate investment advisor embedded in the Deal Wise Rent rental property analyzer.
 
 You receive the user's current calculator state as JSON. Your job:
 
