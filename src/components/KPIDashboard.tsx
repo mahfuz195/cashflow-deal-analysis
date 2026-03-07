@@ -1,6 +1,7 @@
 import { CalculatorOutputs } from '@/types/calculator';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
+import { AffiliateLinks } from './AffiliateLinks';
 
 interface KPIDashboardProps {
   outputs: CalculatorOutputs;
@@ -40,6 +41,7 @@ export function KPIDashboard({ outputs, isDIY, onToggleDIY }: KPIDashboardProps)
             {outputs.dealRating}
           </span>
           <span className="text-sm text-muted-foreground font-medium">Deal Rating</span>
+          <AffiliateLinks />
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground">DIY Management</span>

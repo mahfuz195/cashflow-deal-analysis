@@ -94,11 +94,16 @@ export default {
           from: { transform: "translateY(10px)", opacity: "0" },
           to: { transform: "translateY(0)", opacity: "1" },
         },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(200%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "slide-up": "slide-up 0.2s ease-out",
+        shimmer: "shimmer 2.5s infinite",
       },
     },
   },
