@@ -36,7 +36,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                 <DollarSign className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-lg font-bold text-foreground tracking-tight">CashFlow</span>
+              <span className="text-lg font-bold text-foreground tracking-tight">Deal Wise Rent</span>
             </div>
             {!user && (
               <button
@@ -93,7 +93,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
                 <DollarSign className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="text-base font-bold text-foreground tracking-tight">CashFlow</span>
+              <span className="text-base font-bold text-foreground tracking-tight">Deal Wise Rent</span>
             </div>
             {user ? (
               <button

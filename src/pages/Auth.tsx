@@ -48,7 +48,7 @@ export default function Auth() {
             <DollarSign className="w-7 h-7 text-primary-foreground" />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">CashFlow</h1>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Deal Wise Rent</h1>
             <p className="text-sm text-muted-foreground mt-0.5">Rental Deal Analysis</p>
           </div>
         </div>
