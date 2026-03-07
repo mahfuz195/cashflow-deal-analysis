@@ -14,7 +14,34 @@ interface DealCoachProps {
   onOpenRef?: (openFn: () => void) => void;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+
+function buildSystemPrompt(s: CalculatorState): string {
+  const downPayment = s.purchasePrice * (s.downPaymentPercent / 100);
+  const loanAmount = s.purchasePrice - downPayment;
+  const totalRent = s.rentPerUnit * s.numberOfUnits;
+  return `You are Deal Advisor, an expert real estate investment analyst for Deal Wise Rent. Help investors analyze rental property deals, optimize returns, and make confident decisions.
+
+Current deal being analyzed:
+- Purchase Price: $${s.purchasePrice.toLocaleString()}
+- Down Payment: ${s.downPaymentPercent}% ($${downPayment.toLocaleString()})
+- Loan Amount: $${loanAmount.toLocaleString()} @ ${s.interestRate}% for ${s.loanTerm} yrs
+- Rent: ${s.numberOfUnits} unit(s) × $${s.rentPerUnit}/mo = $${totalRent.toLocaleString()}/mo
+- Vacancy: ${s.vacancyRate}% | Annual rent increase: ${s.annualRentIncrease}%
+- Property Taxes: $${s.propertyTaxes}/yr | Insurance: $${s.insurance}/yr
+- Maintenance/CapEx: $${s.maintenanceCapex}/yr
+- Management: ${s.isDIY ? 'DIY (no fee)' : `${s.propertyManagementFee}% of EGI`}
+- HOA: $${s.hoa}/mo | Appreciation: ${s.appreciationRate}%/yr
+
+Rules:
+- Be direct and specific to this exact deal
+- Use markdown (bold, bullets, headers) for clarity
+- When recommending a specific numeric change, append it in this exact block:
+\`\`\`apply
+{"field": "fieldName", "value": numericValue}
+\`\`\`
+Applicable fields: purchasePrice, downPaymentPercent, interestRate, loanTerm, rentPerUnit, numberOfUnits, vacancyRate, propertyTaxes, insurance, maintenanceCapex, propertyManagementFee, appreciationRate`;
+}
 
 async function streamChat({
   messages,
@@ -29,13 +56,25 @@ async function streamChat({
   onDone: () => void;
   onError: (err: string) => void;
 }) {
-  const resp = await fetch(CHAT_URL, {
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  if (!apiKey) {
+    onError('OpenAI API key not configured. Add VITE_OPENAI_API_KEY to your .env file.');
+    return;
+  }
+
+  const systemMsg = { role: 'system', content: buildSystemPrompt(calculatorState) };
+
+  const resp = await fetch(OPENAI_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ messages, calculatorState }),
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      stream: true,
+      messages: [systemMsg, ...messages],
+    }),
   });
 
   if (!resp.ok) {
