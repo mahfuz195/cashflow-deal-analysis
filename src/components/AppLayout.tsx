@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Calculator, Home, Bookmark, Settings, DollarSign, LogOut, User } from 'lucide-react';
+import { Calculator, Home, Bookmark, Settings, DollarSign, LogOut, User, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -70,6 +70,22 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
+          {/* App Store Link */}
+          <div className="px-4 py-3 border-t border-sidebar-border">
+            <a
+              href="https://apps.apple.com/us/app/cash-flow-rental/id6757372799"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors group"
+            >
+              <Smartphone className="w-4 h-4 text-primary shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground leading-tight">Get the iOS App</p>
+                <p className="text-[10px] text-muted-foreground leading-tight truncate">Cash Flow Rental on App Store</p>
+              </div>
+            </a>
+          </div>
+
           {/* Sidebar Footer */}
           {user && (
             <div className="p-4 border-t border-sidebar-border space-y-3">
@@ -94,6 +110,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <DollarSign className="w-4 h-4 text-primary-foreground" />
               </div>
               <span className="text-base font-bold text-foreground tracking-tight">Deal Wise Rent</span>
+              <a
+                href="https://apps.apple.com/us/app/cash-flow-rental/id6757372799"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors ml-1"
+                title="Download iOS App"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-primary" />
+                <span className="text-[10px] font-semibold text-primary">App</span>
+              </a>
             </div>
             {user ? (
               <button
