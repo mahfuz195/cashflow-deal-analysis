@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Link, MapPin, Download, Home, BedDouble, Bath, DollarSign, ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
+import { Link, MapPin, Download, Home, BedDouble, Bath, DollarSign, ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles, Zap, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CalculatorState } from '@/types/calculator';
 import { toast } from 'sonner';
+import { AIDealAnalysis } from './AIDealAnalysis';
 
 const ESTIMATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/property-estimate`;
 
@@ -43,16 +44,13 @@ interface PropertyData {
   lastSalePrice?: number;
   assessedValue?: number;
   propertyTaxes?: number;
-  // from listings
   nearbyRentals?: number[];
   medianRent?: number;
   rentalCount?: number;
-  // AI estimates for missing fields
   aiEstimates?: Record<string, number>;
   estimatingAi?: boolean;
 }
 
-/** Safely coerce any RentCast field value to a number, handling nested objects */
 function toNumber(val: unknown): number | undefined {
   if (val == null) return undefined;
   if (typeof val === 'number') return val;
@@ -61,13 +59,11 @@ function toNumber(val: unknown): number | undefined {
     return isNaN(n) ? undefined : n;
   }
   if (typeof val === 'object') {
-    // Try common keys first
     const obj = val as Record<string, unknown>;
     for (const key of ['annual', 'total', 'amount', 'value', 'yearly']) {
       const n = toNumber(obj[key]);
       if (n !== undefined) return n;
     }
-    // Fall back to first numeric value found
     for (const v of Object.values(obj)) {
       const n = toNumber(v);
       if (n !== undefined) return n;
@@ -78,44 +74,22 @@ function toNumber(val: unknown): number | undefined {
 
 function extractAddressFromUrl(input: string): string {
   const trimmed = input.trim();
-
-  // Already an address (not a URL)
   if (!trimmed.startsWith('http')) return trimmed;
-
   try {
     const url = new URL(trimmed);
-
-    // Zillow: /homedetails/123-Main-St-City-ST-12345/zpid/
     if (url.hostname.includes('zillow.com')) {
       const match = url.pathname.match(/\/homedetails\/([^/]+)\//);
-      if (match) {
-        return match[1]
-          .replace(/-/g, ' ')
-          .replace(/\b(\w)/g, c => c.toUpperCase());
-      }
+      if (match) return match[1].replace(/-/g, ' ').replace(/\b(\w)/g, c => c.toUpperCase());
     }
-
-    // Realtor.com: /realestateandhomes-detail/123-Main-St_City_ST_12345_M.../
     if (url.hostname.includes('realtor.com')) {
       const match = url.pathname.match(/\/realestateandhomes-detail\/([^/]+)/);
-      if (match) {
-        return match[1]
-          .replace(/_M[\w\d]+$/, '')   // strip trailing _M12345
-          .replace(/_/g, ', ')
-          .replace(/-/g, ' ');
-      }
+      if (match) return match[1].replace(/_M[\w\d]+$/, '').replace(/_/g, ', ').replace(/-/g, ' ');
     }
-
-    // Redfin: /CA/City/123-Main-St-12345/home/...
     if (url.hostname.includes('redfin.com')) {
       const parts = url.pathname.split('/').filter(Boolean);
-      if (parts.length >= 3) {
-        const addressPart = parts[2];
-        return addressPart.replace(/-/g, ' ');
-      }
+      if (parts.length >= 3) return parts[2].replace(/-/g, ' ');
     }
-  } catch { /* not a valid URL, treat as address */ }
-
+  } catch { /* treat as address */ }
   return trimmed;
 }
 
@@ -128,8 +102,6 @@ function median(arr: number[]): number {
 
 async function fetchPropertyData(address: string, apiKey: string): Promise<PropertyData> {
   const headers = { 'X-Api-Key': apiKey, Accept: 'application/json' };
-
-  // 1. Property details
   const propRes = await fetch(
     `https://api.rentcast.io/v1/properties?address=${encodeURIComponent(address)}&limit=1`,
     { headers }
@@ -139,7 +111,6 @@ async function fetchPropertyData(address: string, apiKey: string): Promise<Prope
   const prop = Array.isArray(propData) ? propData[0] : propData;
   if (!prop) throw new Error('No property found for that address.');
 
-  // 2. Nearby for-rent listings (2-mile radius)
   const rentRes = await fetch(
     `https://api.rentcast.io/v1/listings/rental/long-term?address=${encodeURIComponent(prop.formattedAddress ?? address)}&radius=2&status=Active&limit=50`,
     { headers }
@@ -148,9 +119,7 @@ async function fetchPropertyData(address: string, apiKey: string): Promise<Prope
   if (rentRes.ok) {
     const rentData = await rentRes.json();
     const listings = Array.isArray(rentData) ? rentData : rentData.listings ?? [];
-    nearbyRentals = listings
-      .map((l: any) => Number(l.price))
-      .filter((p: number) => p > 100);
+    nearbyRentals = listings.map((l: any) => Number(l.price)).filter((p: number) => p > 100);
   }
 
   return {
@@ -169,24 +138,30 @@ async function fetchPropertyData(address: string, apiKey: string): Promise<Prope
   };
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoRow({ label, value, isAi }: { label: string; value: string; isAi?: boolean }) {
   return (
     <div className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
       <span className="text-xs text-muted-foreground">{label}</span>
-      <span className="text-xs font-semibold text-foreground">{value}</span>
+      <div className="flex items-center gap-1.5">
+        {isAi && <Sparkles className="w-2.5 h-2.5 text-primary/60" />}
+        <span className="text-xs font-semibold text-foreground">{value}</span>
+      </div>
     </div>
   );
 }
 
 export function PropertyImport({ updateField }: PropertyImportProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true); // open by default
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<PropertyData | null>(null);
   const [imported, setImported] = useState(false);
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
+  const [aiAddress, setAiAddress] = useState('');
 
   const apiKey = import.meta.env.VITE_RENTCAST_API_KEY ?? '';
+  const canAction = !loading && !!input.trim();
 
   const handleFetch = async () => {
     if (!input.trim()) return;
@@ -200,11 +175,10 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
       setData(result);
       setLoading(false);
 
-      // Determine which key fields are missing and ask AI to estimate them
       const missingFields: string[] = [];
       if (!result.lastSalePrice && !result.assessedValue) missingFields.push('purchasePrice');
       if (!result.medianRent) missingFields.push('rentPerUnit');
-      if (result.propertyTaxes == null) missingFields.push('propertyTaxes'); // always AI-estimate if missing
+      if (result.propertyTaxes == null) missingFields.push('propertyTaxes');
       missingFields.push('insurance');
       missingFields.push('maintenanceCapex');
 
@@ -219,20 +193,24 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
     }
   };
 
+  const handleOpenAiAnalysis = () => {
+    const addr = data?.address ?? extractAddressFromUrl(input.trim());
+    if (!addr) return;
+    setAiAddress(addr);
+    setShowAiAnalysis(true);
+  };
+
   const handleImport = () => {
     if (!data) return;
     const ai = data.aiEstimates ?? {};
-
     const purchasePrice = data.lastSalePrice ?? data.assessedValue ?? ai.purchasePrice;
     const rentPerUnit = data.medianRent ?? ai.rentPerUnit;
     const propertyTaxes = data.propertyTaxes ?? ai.propertyTaxes;
-
     if (purchasePrice) updateField('purchasePrice', Math.round(purchasePrice));
     if (rentPerUnit) updateField('rentPerUnit', Math.round(rentPerUnit));
     if (propertyTaxes) updateField('propertyTaxes', Math.round(propertyTaxes));
     if (ai.insurance) updateField('insurance', Math.round(ai.insurance));
     if (ai.maintenanceCapex) updateField('maintenanceCapex', Math.round(ai.maintenanceCapex));
-
     setImported(true);
     toast.success('Property data imported into calculator!');
     setTimeout(() => setOpen(false), 800);
@@ -251,7 +229,7 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
           </div>
           <div className="text-left">
             <p className="text-sm font-semibold text-foreground">Import from Zillow / Realtor.com</p>
-            <p className="text-[11px] text-muted-foreground">Paste a listing URL or address to auto-fill the calculator</p>
+            <p className="text-[11px] text-muted-foreground">Paste a listing URL or address · Look up data or run AI analysis</p>
           </div>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
@@ -259,26 +237,56 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
 
       {open && (
         <div className="px-5 pb-5 space-y-4 border-t border-border/50">
-          {/* Input */}
+
+          {/* ── Address input + action buttons ── */}
           <div className="pt-4 space-y-2">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={input}
-                  onChange={e => { setInput(e.target.value); setData(null); setImported(false); setError(''); }}
-                  onKeyDown={e => e.key === 'Enter' && handleFetch()}
-                  placeholder="Paste Zillow/Realtor URL or type address..."
-                  className="w-full h-10 rounded-lg border border-input bg-background pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              <Button onClick={handleFetch} disabled={loading || !input.trim()} className="shrink-0 h-10">
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Look Up'}
-              </Button>
+            {/* Address box */}
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={input}
+                onChange={e => { setInput(e.target.value); setData(null); setImported(false); setError(''); }}
+                onKeyDown={e => e.key === 'Enter' && handleFetch()}
+                placeholder="Paste Zillow / Realtor / Redfin URL — or type a US address..."
+                className="w-full h-11 rounded-lg border border-input bg-background pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
             </div>
+
+            {/* Side-by-side action buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              {/* Look Up */}
+              <Button
+                onClick={handleFetch}
+                disabled={!canAction}
+                variant="outline"
+                className="h-10 text-sm"
+              >
+                {loading
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Looking up...</>
+                  : <><Download className="w-4 h-4 mr-2" /> Look Up Property</>
+                }
+              </Button>
+
+              {/* AI Deal Analysis — prominent */}
+              <button
+                onClick={handleOpenAiAnalysis}
+                disabled={!canAction}
+                className={cn(
+                  'relative h-10 flex items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold transition-all',
+                  canAction
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm hover:shadow-md'
+                    : 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
+                )}
+              >
+                <Zap className="w-4 h-4 shrink-0" />
+                <span>One Click AI Analysis</span>
+                <Sparkles className="w-3.5 h-3.5 shrink-0 opacity-80" />
+              </button>
+            </div>
+
             <p className="text-[10px] text-muted-foreground">
-              Supports: zillow.com, realtor.com, redfin.com URLs — or just type a US address
+              Supports: zillow.com · realtor.com · redfin.com · or type any US address
             </p>
           </div>
 
@@ -288,12 +296,12 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
             </div>
           )}
 
-          {/* Results preview */}
+          {/* ── Results ── */}
           {data && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
-              {/* Property card — price + details */}
+
+              {/* Property card */}
               <div className="rounded-xl border border-border bg-accent/30 overflow-hidden">
-                {/* Address bar */}
                 <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50 bg-accent/40">
                   <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
                   <p className="text-xs font-medium text-foreground leading-snug truncate">{data.address}</p>
@@ -304,7 +312,6 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                   )}
                 </div>
 
-                {/* Listed price — prominent */}
                 <div className="px-4 pt-3 pb-2">
                   <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Listed / Last Sale Price</p>
                   {(data.lastSalePrice ?? data.assessedValue) ? (
@@ -323,29 +330,22 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                   )}
                 </div>
 
-                {/* Beds / Baths / Sqft row */}
                 <div className="grid grid-cols-3 divide-x divide-border/50 border-t border-border/50 mt-1">
-                  <div className="flex flex-col items-center py-2.5 gap-0.5">
-                    <BedDouble className="w-4 h-4 text-primary" />
-                    <p className="text-sm font-bold text-foreground">{data.bedrooms ?? '—'}</p>
-                    <p className="text-[10px] text-muted-foreground">Beds</p>
-                  </div>
-                  <div className="flex flex-col items-center py-2.5 gap-0.5">
-                    <Bath className="w-4 h-4 text-primary" />
-                    <p className="text-sm font-bold text-foreground">{data.bathrooms ?? '—'}</p>
-                    <p className="text-[10px] text-muted-foreground">Baths</p>
-                  </div>
-                  <div className="flex flex-col items-center py-2.5 gap-0.5">
-                    <Home className="w-4 h-4 text-primary" />
-                    <p className="text-sm font-bold text-foreground">
-                      {data.squareFootage ? data.squareFootage.toLocaleString() : '—'}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">Sq Ft</p>
-                  </div>
+                  {[
+                    { icon: <BedDouble className="w-4 h-4 text-primary" />, val: data.bedrooms ?? '—', label: 'Beds' },
+                    { icon: <Bath className="w-4 h-4 text-primary" />, val: data.bathrooms ?? '—', label: 'Baths' },
+                    { icon: <Home className="w-4 h-4 text-primary" />, val: data.squareFootage ? data.squareFootage.toLocaleString() : '—', label: 'Sq Ft' },
+                  ].map(({ icon, val, label }) => (
+                    <div key={label} className="flex flex-col items-center py-2.5 gap-0.5">
+                      {icon}
+                      <p className="text-sm font-bold text-foreground">{val}</p>
+                      <p className="text-[10px] text-muted-foreground">{label}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Fields that will be imported */}
+              {/* Fields to import */}
               <div className="bg-background rounded-lg border border-border/50 px-3 py-2 divide-y divide-border/40">
                 <div className="flex items-center justify-between pb-2">
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Fields to import</p>
@@ -356,7 +356,6 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                   )}
                 </div>
 
-                {/* RentCast data */}
                 {(data.lastSalePrice ?? data.assessedValue) && (
                   <InfoRow label="Purchase Price" value={`$${(data.lastSalePrice ?? data.assessedValue)!.toLocaleString()}`} />
                 )}
@@ -367,7 +366,6 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                   <InfoRow label="Property Taxes" value={`$${data.propertyTaxes.toLocaleString()}/yr`} />
                 )}
 
-                {/* AI estimates */}
                 {data.aiEstimates && Object.keys(data.aiEstimates).length > 0 && (
                   <>
                     <div className="pt-2 pb-1">
@@ -376,20 +374,27 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                       </span>
                     </div>
                     {!data.lastSalePrice && !data.assessedValue && data.aiEstimates.purchasePrice && (
-                      <InfoRow label="Purchase Price (AI est.)" value={`$${data.aiEstimates.purchasePrice.toLocaleString()}`} />
+                      <InfoRow label="Purchase Price (AI est.)" value={`$${data.aiEstimates.purchasePrice.toLocaleString()}`} isAi />
                     )}
                     {!data.medianRent && data.aiEstimates.rentPerUnit && (
-                      <InfoRow label="Rent/Unit (AI est.)" value={`$${data.aiEstimates.rentPerUnit.toLocaleString()}/mo`} />
+                      <InfoRow label="Rent/Unit (AI est.)" value={`$${data.aiEstimates.rentPerUnit.toLocaleString()}/mo`} isAi />
                     )}
                     {!data.propertyTaxes && data.aiEstimates.propertyTaxes && (
-                      <InfoRow label="Property Taxes (AI est.)" value={`$${data.aiEstimates.propertyTaxes.toLocaleString()}/yr`} />
+                      <InfoRow label="Property Taxes (AI est.)" value={`$${data.aiEstimates.propertyTaxes.toLocaleString()}/yr`} isAi />
                     )}
                     {data.aiEstimates.insurance && (
-                      <InfoRow label="Insurance (AI est.)" value={`$${data.aiEstimates.insurance.toLocaleString()}/yr`} />
+                      <InfoRow label="Insurance (AI est.)" value={`$${data.aiEstimates.insurance.toLocaleString()}/yr`} isAi />
                     )}
                     {data.aiEstimates.maintenanceCapex && (
-                      <InfoRow label="Maintenance/CapEx (AI est.)" value={`$${data.aiEstimates.maintenanceCapex.toLocaleString()}/yr`} />
+                      <InfoRow label="Maintenance/CapEx (AI est.)" value={`$${data.aiEstimates.maintenanceCapex.toLocaleString()}/yr`} isAi />
                     )}
+                    {/* Disclaimer for AI-estimated fields */}
+                    <div className="flex items-start gap-1.5 pt-2">
+                      <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        AI estimates are approximations based on location and market data. Always verify with a licensed appraiser, tax professional, or local agent before making investment decisions.
+                      </p>
+                    </div>
                   </>
                 )}
 
@@ -398,7 +403,7 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                 )}
               </div>
 
-              {/* Nearby rentals summary */}
+              {/* Nearby rentals */}
               {data.nearbyRentals && data.nearbyRentals.length > 0 && (
                 <div className="bg-primary/5 rounded-lg px-3 py-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -410,26 +415,54 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                       </p>
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-primary">${data.medianRent?.toLocaleString()}</span>
+                  <span className="text-sm font-bold text-primary">${data.medianRent?.toLocaleString()}/mo</span>
                 </div>
               )}
 
-              {/* Import button */}
-              <Button
-                onClick={handleImport}
-                disabled={imported || !!data.estimatingAi}
-                className="w-full"
-                variant={imported ? 'outline' : 'default'}
-              >
-                {imported ? (
-                  <><CheckCircle2 className="w-4 h-4 mr-2 text-green-500" /> Imported to Calculator</>
-                ) : (
-                  <><Download className="w-4 h-4 mr-2" /> Import to Calculator</>
-                )}
-              </Button>
+              {/* ── Action buttons side by side ── */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={handleImport}
+                  disabled={imported || !!data.estimatingAi}
+                  variant={imported ? 'outline' : 'outline'}
+                  className="h-11"
+                >
+                  {imported
+                    ? <><CheckCircle2 className="w-4 h-4 mr-2 text-green-500" /> Imported</>
+                    : <><Download className="w-4 h-4 mr-2" /> Import to Calculator</>
+                  }
+                </Button>
+
+                <button
+                  onClick={handleOpenAiAnalysis}
+                  className="h-11 flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm hover:shadow-md px-3"
+                >
+                  <Zap className="w-4 h-4 shrink-0" />
+                  <span className="truncate">One Click AI Analysis</span>
+                  <Sparkles className="w-3.5 h-3.5 shrink-0 opacity-80" />
+                </button>
+              </div>
+
+              {/* Due diligence reminder */}
+              <div className="flex items-start gap-2 bg-amber-500/8 border border-amber-500/20 rounded-lg px-3 py-2.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  <span className="font-semibold text-foreground">Due Diligence Required.</span> All figures shown are estimates for analysis purposes only. Verify purchase price, rental rates, taxes, and expenses with a licensed real estate agent, appraiser, and tax professional before investing.
+                </p>
+              </div>
             </div>
           )}
         </div>
+      )}
+
+      {/* AI Deal Analysis modal */}
+      {showAiAnalysis && (
+        <AIDealAnalysis
+          address={aiAddress}
+          propertyData={data ?? { address: aiAddress }}
+          updateField={updateField}
+          onClose={() => setShowAiAnalysis(false)}
+        />
       )}
     </div>
   );
