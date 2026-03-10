@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, MapPin, Download, Home, BedDouble, Bath, DollarSign, ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles, Zap, AlertTriangle } from 'lucide-react';
+import { Link, MapPin, Download, Home, BedDouble, Bath, DollarSign, ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles, Zap, AlertTriangle, Globe, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CalculatorState } from '@/types/calculator';
@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { AIDealAnalysis } from './AIDealAnalysis';
 
 const ESTIMATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/property-estimate`;
+const WEB_LOOKUP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/property-web-lookup`;
 
 async function fetchAiEstimates(
   propertyData: PropertyData,
@@ -34,6 +35,18 @@ interface PropertyImportProps {
   updateField: <K extends keyof CalculatorState>(field: K, value: CalculatorState[K]) => void;
 }
 
+interface WebLookupData {
+  listedPrice?: number;
+  estimatedValue?: number;
+  listingStatus?: 'Active' | 'Pending' | 'Sold' | 'Off Market';
+  daysOnMarket?: number;
+  pricePerSqft?: number;
+  listingUrl?: string;
+  source?: string;
+  lastSoldPrice?: number;
+  lastSoldDate?: string;
+}
+
 interface PropertyData {
   address: string;
   bedrooms?: number;
@@ -49,6 +62,37 @@ interface PropertyData {
   rentalCount?: number;
   aiEstimates?: Record<string, number>;
   estimatingAi?: boolean;
+  webLookup?: WebLookupData;
+  fetchingWeb?: boolean;
+}
+
+async function fetchWebLookup(address: string): Promise<WebLookupData> {
+  try {
+    const res = await fetch(WEB_LOOKUP_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({ address }),
+    });
+    if (!res.ok) return {};
+    const { webData } = await res.json();
+    // Coerce numeric fields
+    return {
+      listedPrice: toNumber(webData?.listedPrice),
+      estimatedValue: toNumber(webData?.estimatedValue),
+      listingStatus: webData?.listingStatus ?? undefined,
+      daysOnMarket: toNumber(webData?.daysOnMarket),
+      pricePerSqft: toNumber(webData?.pricePerSqft),
+      listingUrl: typeof webData?.listingUrl === 'string' ? webData.listingUrl : undefined,
+      source: typeof webData?.source === 'string' ? webData.source : undefined,
+      lastSoldPrice: toNumber(webData?.lastSoldPrice),
+      lastSoldDate: typeof webData?.lastSoldDate === 'string' ? webData.lastSoldDate : undefined,
+    };
+  } catch {
+    return {};
+  }
 }
 
 function toNumber(val: unknown): number | undefined {
@@ -171,10 +215,17 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
     setLoading(true);
     try {
       const address = extractAddressFromUrl(input.trim());
-      const result = await fetchPropertyData(address, apiKey);
-      setData(result);
+
+      // Run RentCast lookup and web lookup in parallel
+      const [result] = await Promise.all([
+        fetchPropertyData(address, apiKey),
+      ]);
+
+      // Show RentCast data immediately, mark web lookup as in-progress
+      setData({ ...result, fetchingWeb: true });
       setLoading(false);
 
+      // Run web lookup + AI estimates in parallel
       const missingFields: string[] = [];
       if (!result.lastSalePrice && !result.assessedValue) missingFields.push('purchasePrice');
       if (!result.medianRent) missingFields.push('rentPerUnit');
@@ -182,11 +233,17 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
       missingFields.push('insurance');
       missingFields.push('maintenanceCapex');
 
-      if (missingFields.length) {
-        setData(prev => prev ? { ...prev, estimatingAi: true } : prev);
-        const aiEstimates = await fetchAiEstimates(result, missingFields);
-        setData(prev => prev ? { ...prev, aiEstimates, estimatingAi: false } : prev);
-      }
+      const [webLookup, aiEstimates] = await Promise.all([
+        fetchWebLookup(address),
+        missingFields.length ? fetchAiEstimates(result, missingFields) : Promise.resolve({}),
+      ]);
+
+      setData(prev => prev ? {
+        ...prev,
+        webLookup,
+        fetchingWeb: false,
+        ...(Object.keys(aiEstimates).length ? { aiEstimates, estimatingAi: false } : {}),
+      } : prev);
     } catch (e: any) {
       setError(e.message ?? 'Failed to fetch property data.');
       setLoading(false);
@@ -203,7 +260,9 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
   const handleImport = () => {
     if (!data) return;
     const ai = data.aiEstimates ?? {};
-    const purchasePrice = data.lastSalePrice ?? data.assessedValue ?? ai.purchasePrice;
+    const web = data.webLookup ?? {};
+    // Priority: web listed price > web estimated value > RentCast last sale > assessed > AI estimate
+    const purchasePrice = web.listedPrice ?? web.estimatedValue ?? data.lastSalePrice ?? data.assessedValue ?? ai.purchasePrice;
     const rentPerUnit = data.medianRent ?? ai.rentPerUnit;
     const propertyTaxes = data.propertyTaxes ?? ai.propertyTaxes;
     if (purchasePrice) updateField('purchasePrice', Math.round(purchasePrice));
@@ -312,21 +371,104 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                   )}
                 </div>
 
-                <div className="px-4 pt-3 pb-2">
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Listed / Last Sale Price</p>
-                  {(data.lastSalePrice ?? data.assessedValue) ? (
-                    <div className="flex items-end gap-3 mt-0.5">
-                      <p className="text-2xl font-bold text-foreground">
-                        ${(data.lastSalePrice ?? data.assessedValue)!.toLocaleString()}
+                {/* Price section — web listed price + RentCast last sale */}
+                <div className="px-4 pt-3 pb-3 space-y-3">
+
+                  {/* Current listing from web search */}
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <Globe className="w-3 h-3 text-primary" />
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+                        Current Market Price
+                        {data.webLookup?.source && (
+                          <span className="normal-case font-normal ml-1">· via {data.webLookup.source}</span>
+                        )}
                       </p>
-                      {data.squareFootage && (data.lastSalePrice ?? data.assessedValue) && (
-                        <p className="text-xs text-muted-foreground mb-0.5">
-                          ${Math.round((data.lastSalePrice ?? data.assessedValue)! / data.squareFootage!)}/sqft
-                        </p>
+                      {data.fetchingWeb && (
+                        <Loader2 className="w-3 h-3 animate-spin text-primary ml-auto" />
                       )}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic mt-0.5">Not available — AI will estimate</p>
+
+                    {data.fetchingWeb && !data.webLookup && (
+                      <p className="text-sm text-muted-foreground italic">Searching Zillow / Redfin...</p>
+                    )}
+
+                    {data.webLookup && (
+                      <>
+                        {data.webLookup.listedPrice ? (
+                          <div className="flex items-end gap-3">
+                            <p className="text-2xl font-bold text-foreground">
+                              ${data.webLookup.listedPrice.toLocaleString()}
+                            </p>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              {data.webLookup.listingStatus && (
+                                <span className={cn(
+                                  'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
+                                  data.webLookup.listingStatus === 'Active' && 'bg-green-500/15 text-green-600',
+                                  data.webLookup.listingStatus === 'Pending' && 'bg-amber-500/15 text-amber-600',
+                                  data.webLookup.listingStatus === 'Sold' && 'bg-red-500/15 text-red-600',
+                                  data.webLookup.listingStatus === 'Off Market' && 'bg-muted text-muted-foreground',
+                                )}>
+                                  {data.webLookup.listingStatus}
+                                </span>
+                              )}
+                              {data.webLookup.daysOnMarket != null && (
+                                <span className="text-[10px] text-muted-foreground">{data.webLookup.daysOnMarket}d on market</span>
+                              )}
+                              {data.webLookup.pricePerSqft && (
+                                <span className="text-[10px] text-muted-foreground">${data.webLookup.pricePerSqft}/sqft</span>
+                              )}
+                            </div>
+                          </div>
+                        ) : data.webLookup.estimatedValue ? (
+                          <div className="flex items-end gap-3">
+                            <p className="text-2xl font-bold text-foreground">
+                              ${data.webLookup.estimatedValue.toLocaleString()}
+                            </p>
+                            <span className="text-[10px] text-muted-foreground mb-0.5">Est. market value</span>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">Not found online</p>
+                        )}
+
+                        {data.webLookup.listingUrl && (
+                          <a
+                            href={data.webLookup.listingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline mt-0.5"
+                          >
+                            <ExternalLink className="w-2.5 h-2.5" />
+                            View on {data.webLookup.source ?? 'listing site'}
+                          </a>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* RentCast last sale / assessed divider */}
+                  {(data.lastSalePrice ?? data.assessedValue ?? data.webLookup?.lastSoldPrice) && (
+                    <div className="pt-2 border-t border-border/40">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">Last Sale / Assessed</p>
+                      <div className="flex items-end gap-3">
+                        <p className="text-base font-bold text-foreground">
+                          ${(data.lastSalePrice ?? data.assessedValue ?? data.webLookup?.lastSoldPrice)!.toLocaleString()}
+                        </p>
+                        {data.webLookup?.lastSoldDate && (
+                          <span className="text-[10px] text-muted-foreground mb-0.5">{data.webLookup.lastSoldDate}</span>
+                        )}
+                        {data.squareFootage && (data.lastSalePrice ?? data.assessedValue) && (
+                          <span className="text-[10px] text-muted-foreground mb-0.5">
+                            ${Math.round((data.lastSalePrice ?? data.assessedValue)! / data.squareFootage!)}/sqft
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Nothing found yet */}
+                  {!data.fetchingWeb && !data.webLookup?.listedPrice && !data.webLookup?.estimatedValue && !data.lastSalePrice && !data.assessedValue && (
+                    <p className="text-sm text-muted-foreground italic">Price not available — AI will estimate</p>
                   )}
                 </div>
 
