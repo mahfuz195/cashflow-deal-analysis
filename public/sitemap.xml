@@ -1,39 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+    http://www.sitemaps.org/schemas/sitemap/0.9
+    http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd
+    http://www.google.com/schemas/sitemap-image/1.1
+    http://www.google.com/schemas/sitemap-image/1.1/sitemap-image.xsd">
 
-  <!-- Homepage / Investment Calculator -->
+  <!--
+    Deal Wise Rent — Rental Property Investment Analyzer
+    https://dealwiserent.com
+
+    NOTE: This is a single-page application (SPA).
+    Google does not index hash-fragment URLs (#section).
+    All content is served from the root URL below.
+  -->
+
   <url>
     <loc>https://dealwiserent.com/</loc>
     <lastmod>2026-03-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
-  </url>
 
-  <!-- Rent Estimator tab -->
-  <url>
-    <loc>https://dealwiserent.com/#rent-estimator</loc>
-    <lastmod>2026-03-11</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
-  <!-- Saved Calculations tab -->
-  <url>
-    <loc>https://dealwiserent.com/#saved</loc>
-    <lastmod>2026-03-11</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-
-  <!-- Settings tab -->
-  <url>
-    <loc>https://dealwiserent.com/#settings</loc>
-    <lastmod>2026-03-11</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
+    <!-- Primary OG / social share image -->
+    <image:image>
+      <image:loc>https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/85ebcda6-a23e-4b6e-a9f3-975589025f07/id-preview-0f543970--e157814b-5195-40d1-a666-0e7d76375f87.lovable.app-1772721473380.png</image:loc>
+      <image:title>Deal Wise Rent — Rental Property Investment Analyzer</image:title>
+      <image:caption>Analyze rental property investments with real-time cash flow, ROI, cap rate, and equity projections. Free online tool for real estate investors.</image:caption>
+    </image:image>
   </url>
 
 </urlset>

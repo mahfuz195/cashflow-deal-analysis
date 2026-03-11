@@ -3,12 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Deal Wise Rent — Rental Property Investment Analyzer</title>
-    <meta name="description" content="Analyze rental property investments with real-time cash flow, ROI, cap rate, and equity projections.">
+    <meta name="theme-color" content="#6366f1" />
+
+    <!-- Primary SEO -->
+    <title>Free Rental Property Calculator — Cash Flow, Cap Rate &amp; ROI | Deal Wise Rent</title>
+    <meta name="description" content="Free rental property investment calculator. Instantly analyze cash flow, cap rate, cash-on-cash ROI, and 10-year equity growth. Import from Zillow &amp; Redfin. AI-powered deal analysis. Trusted by real estate investors.">
+    <meta name="keywords" content="rental property calculator, cash flow calculator, cap rate calculator, cash on cash return calculator, real estate investment analyzer, rental income calculator, ROI calculator real estate, buy and hold calculator, rental property ROI, real estate deal analyzer, investment property calculator, NOI calculator, rental property analysis tool, free real estate calculator">
     <meta name="author" content="Deal Wise Rent" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://dealwiserent.com/" />
+
+    <!-- Preconnect for performance (helps Core Web Vitals = better ranking) -->
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+    <link rel="dns-prefetch" href="https://api.rentcast.io" />
 
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2018204054516699"
@@ -23,20 +40,303 @@
       gtag('config', 'G-QNDR60GZ0G');
     </script>
 
+    <!-- Open Graph -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/85ebcda6-a23e-4b6e-a9f3-975589025f07/id-preview-0f543970--e157814b-5195-40d1-a666-0e7d76375f87.lovable.app-1772721473380.png">
+    <meta property="og:site_name" content="Deal Wise Rent" />
+    <meta property="og:url" content="https://dealwiserent.com/" />
+    <meta property="og:title" content="Free Rental Property Calculator — Cash Flow, Cap Rate &amp; ROI" />
+    <meta property="og:description" content="Free rental property investment calculator. Analyze cash flow, cap rate, CoC ROI, and 10-year equity growth. Import from Zillow &amp; Redfin. AI deal analysis in one click." />
+    <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/85ebcda6-a23e-4b6e-a9f3-975589025f07/id-preview-0f543970--e157814b-5195-40d1-a666-0e7d76375f87.lovable.app-1772721473380.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Deal Wise Rent rental property calculator showing cash flow, cap rate, and 10-year equity charts" />
+    <meta property="og:locale" content="en_US" />
 
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/85ebcda6-a23e-4b6e-a9f3-975589025f07/id-preview-0f543970--e157814b-5195-40d1-a666-0e7d76375f87.lovable.app-1772721473380.png">
-    <meta property="og:title" content="Deal Wise Rent — Rental Property Investment Analyzer">
-  <meta name="twitter:title" content="Deal Wise Rent — Rental Property Investment Analyzer">
-  <meta property="og:description" content="Analyze rental property investments with real-time cash flow, ROI, cap rate, and equity projections.">
-  <meta name="twitter:description" content="Analyze rental property investments with real-time cash flow, ROI, cap rate, and equity projections.">
-</head>
+    <meta name="twitter:site" content="@DealWiseRent" />
+    <meta name="twitter:title" content="Free Rental Property Calculator — Cash Flow, Cap Rate &amp; ROI" />
+    <meta name="twitter:description" content="Free rental property investment calculator. Analyze cash flow, cap rate, CoC ROI, and 10-year equity growth. Import from Zillow &amp; Redfin. AI deal analysis in one click." />
+    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/85ebcda6-a23e-4b6e-a9f3-975589025f07/id-preview-0f543970--e157814b-5195-40d1-a666-0e7d76375f87.lovable.app-1772721473380.png" />
+    <meta name="twitter:image:alt" content="Deal Wise Rent — Rental Property Investment Analyzer" />
+
+    <!-- ── JSON-LD: WebApplication ── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Deal Wise Rent",
+      "alternateName": ["Rental Property Calculator", "Cash Flow Calculator", "Cap Rate Calculator"],
+      "url": "https://dealwiserent.com/",
+      "description": "Free rental property investment calculator. Analyze cash flow, cap rate, cash-on-cash ROI, and 10-year equity growth projections. Import from Zillow, Redfin, and Realtor.com. AI-powered deal analysis with conservative, moderate, and aggressive investment scenarios.",
+      "applicationCategory": "FinanceApplication",
+      "applicationSubCategory": "Real Estate Investment Tools",
+      "operatingSystem": "Web, iOS, Android",
+      "browserRequirements": "Requires JavaScript",
+      "inLanguage": "en-US",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "Cash flow calculator for rental properties",
+        "Cap rate calculator",
+        "Cash-on-cash ROI (CoC) calculator",
+        "Net Operating Income (NOI) calculator",
+        "10-year equity and property value projections",
+        "Monthly and annual mortgage payment calculator",
+        "Import property data from Zillow, Redfin, Realtor.com",
+        "AI-powered one-click deal analysis with web search",
+        "Conservative, moderate, and aggressive investment scenarios",
+        "Rent estimator with live market data",
+        "Export analysis to PDF",
+        "Save and compare multiple deals",
+        "Vacancy rate and expense modeling",
+        "Property management fee calculator"
+      ],
+      "screenshot": "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/85ebcda6-a23e-4b6e-a9f3-975589025f07/id-preview-0f543970--e157814b-5195-40d1-a666-0e7d76375f87.lovable.app-1772721473380.png",
+      "creator": {
+        "@type": "Organization",
+        "name": "Deal Wise Rent",
+        "url": "https://dealwiserent.com/"
+      }
+    }
+    </script>
+
+    <!-- ── JSON-LD: FAQPage (triggers rich results in Google) ── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a good cash-on-cash return for a rental property?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A cash-on-cash return (CoC ROI) of 8% or higher is generally considered excellent for a rental property. A return between 5–8% is good, 0–5% is marginal, and anything negative means the property costs more to hold than it generates. Deal Wise Rent color-codes your result and rates every deal automatically."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a good cap rate for rental property?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cap rates vary by market. In high-cost urban markets (New York, San Francisco), a 4–5% cap rate may be acceptable. In mid-tier markets, 6–8% is considered good. In rural or lower-cost markets, 8–12% is achievable. The cap rate formula is: Cap Rate = Net Operating Income (NOI) / Purchase Price × 100."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you calculate cash flow on a rental property?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Monthly Cash Flow = (Monthly Rent × Units) × (1 - Vacancy Rate) - Monthly Operating Expenses - Monthly Mortgage Payment. Operating expenses include property taxes, insurance, maintenance, property management fees, and other costs. Deal Wise Rent calculates all of this automatically when you enter your property details."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the 1% rule in real estate investing?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The 1% rule states that a rental property's monthly rent should be at least 1% of its purchase price to be cash-flow positive. For example, a $200,000 property should rent for at least $2,000/month. While a useful quick filter, it's a rough guideline — actual profitability depends on your mortgage rate, expenses, and local market. Use Deal Wise Rent for a full analysis."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the 50% rule for rental properties?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The 50% rule estimates that approximately 50% of a rental property's gross rental income will be consumed by operating expenses (excluding mortgage payments). It's a quick way to estimate NOI: NOI ≈ Gross Rent × 50%. For accurate numbers, use a full calculator like Deal Wise Rent that itemizes all expenses."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you calculate Net Operating Income (NOI) for a rental property?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "NOI = Effective Gross Income - Total Operating Expenses. Effective Gross Income = Gross Rental Income × (1 - Vacancy Rate). Operating Expenses include property taxes, insurance, maintenance, CapEx reserves, and property management fees — but NOT mortgage payments. NOI is used to calculate cap rate: Cap Rate = NOI / Property Value."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much monthly cash flow should a rental property produce?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Many experienced real estate investors target a minimum of $200–$300 per month per unit in positive cash flow after all expenses and mortgage payments. However, in competitive markets, any positive cash flow may be acceptable if appreciation potential is high. Use Deal Wise Rent's 10-year equity projection to see the full return picture."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I import a property from Zillow into the calculator?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes! Deal Wise Rent lets you paste a Zillow, Redfin, or Realtor.com listing URL directly into the Import panel. It automatically fetches the property details, current listing price, nearby rental comps, and uses AI to estimate any missing values like property taxes and insurance — all in seconds."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between cash-on-cash return and total ROI?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cash-on-cash return (CoC ROI) measures only the annual cash flow as a percentage of cash invested (down payment + closing costs). Total ROI adds principal paydown (equity buildup from mortgage payments) to the cash flow before dividing by cash invested. Deal Wise Rent calculates and displays both metrics, as well as a 10-year cumulative ROI projection."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a good down payment for an investment property?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most conventional lenders require 20–25% down for investment properties. A larger down payment (25–30%) lowers your monthly mortgage and improves cash flow, but reduces cash-on-cash return since you have more cash invested. Deal Wise Rent lets you model different down payment percentages to find your optimal strategy."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- ── JSON-LD: HowTo (triggers rich results) ── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Analyze a Rental Property Investment",
+      "description": "Step-by-step guide to analyzing a rental property investment using Deal Wise Rent's free calculator.",
+      "totalTime": "PT5M",
+      "tool": [
+        { "@type": "HowToTool", "name": "Deal Wise Rent Calculator" }
+      ],
+      "step": [
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Enter the purchase price",
+          "text": "Enter the property's purchase price, or paste a Zillow / Redfin URL to auto-import it. The tool will also fetch the current market listing price from live web data."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Set your financing terms",
+          "text": "Enter your down payment percentage, interest rate, and loan term. The calculator will compute your monthly mortgage payment and total cash invested."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Enter rental income",
+          "text": "Enter the expected monthly rent per unit and number of units. Use the Rent Estimator tab to get live market rental rates from nearby comparable properties."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 4,
+          "name": "Add operating expenses",
+          "text": "Enter property taxes, insurance, maintenance/CapEx reserve, and property management fee. The calculator supports vacancy rate and all optional expenses like HOA, water, sewer, and lawn care."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 5,
+          "name": "Review your key metrics",
+          "text": "The dashboard instantly shows monthly cash flow, cash-on-cash ROI, cap rate, net operating income, and a deal rating (Excellent / Good / Marginal / Negative)."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 6,
+          "name": "Run AI Deal Analysis",
+          "text": "Click 'One Click AI Analysis' to get a full market research report with conservative, moderate, and aggressive investment scenarios — each with 5-year and 10-year equity projections."
+        }
+      ]
+    }
+    </script>
+
+    <!-- ── JSON-LD: Mobile App ── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MobileApplication",
+      "name": "Cash Flow Rental",
+      "operatingSystem": "iOS",
+      "applicationCategory": "FinanceApplication",
+      "url": "https://apps.apple.com/us/app/cash-flow-rental/id6757372799",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+
+  </head>
 
   <body>
-    <div id="root"></div>
+    <!--
+      Static HTML content for search engine crawlers.
+      React replaces the contents of #root on load,
+      but Googlebot reads this HTML before JavaScript executes.
+    -->
+    <div id="root">
+      <main style="font-family:system-ui,sans-serif;max-width:860px;margin:0 auto;padding:24px 16px;color:#1a1a1a">
+
+        <h1 style="font-size:2rem;font-weight:800;margin-bottom:8px">
+          Free Rental Property Investment Calculator — Deal Wise Rent
+        </h1>
+        <p style="font-size:1.1rem;color:#444;margin-bottom:24px">
+          Instantly analyze any rental property's cash flow, cap rate, cash-on-cash ROI, and 10-year equity growth.
+          Import listings directly from Zillow, Redfin, or Realtor.com. Free, no sign-up required.
+        </p>
+
+        <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:12px">What you can calculate</h2>
+        <ul style="font-size:1rem;color:#333;line-height:1.8;padding-left:20px">
+          <li><strong>Monthly &amp; annual cash flow</strong> — after all expenses and mortgage payments</li>
+          <li><strong>Cash-on-cash return (CoC ROI)</strong> — annual cash flow ÷ cash invested</li>
+          <li><strong>Cap rate</strong> — net operating income ÷ property value</li>
+          <li><strong>Net Operating Income (NOI)</strong> — gross rent minus operating expenses</li>
+          <li><strong>Total ROI</strong> — cash flow + principal paydown + appreciation</li>
+          <li><strong>10-year equity projections</strong> — property value, remaining debt, equity growth</li>
+          <li><strong>Monthly mortgage payment</strong> — based on your rate, term, and down payment</li>
+          <li><strong>Deal rating</strong> — Excellent, Good, Marginal, or Negative</li>
+        </ul>
+
+        <h2 style="font-size:1.4rem;font-weight:700;margin:24px 0 12px">Key features</h2>
+        <ul style="font-size:1rem;color:#333;line-height:1.8;padding-left:20px">
+          <li><strong>Import from Zillow, Redfin &amp; Realtor.com</strong> — paste a listing URL to auto-fill all fields</li>
+          <li><strong>Live market price lookup</strong> — fetches current asking price and listing status</li>
+          <li><strong>One-Click AI Deal Analysis</strong> — AI researches the market and generates 3 investment scenarios</li>
+          <li><strong>Rent estimator</strong> — live rental comp data from nearby active listings</li>
+          <li><strong>AI expense estimation</strong> — fills in missing property taxes, insurance, and maintenance costs</li>
+          <li><strong>PDF export</strong> — download a full investment report</li>
+          <li><strong>Save &amp; compare deals</strong> — store multiple property analyses side by side</li>
+          <li><strong>DIY mode</strong> — toggle off property management fees to model self-management</li>
+        </ul>
+
+        <h2 style="font-size:1.4rem;font-weight:700;margin:24px 0 12px">Rental Property Investment Formulas</h2>
+        <dl style="font-size:0.95rem;color:#333;line-height:1.8">
+          <dt style="font-weight:700">Cash Flow Formula</dt>
+          <dd style="margin-left:16px;margin-bottom:8px">Monthly Cash Flow = (Monthly Rent × Units × (1 − Vacancy%)) − Monthly Expenses − Monthly Mortgage</dd>
+          <dt style="font-weight:700">Cap Rate Formula</dt>
+          <dd style="margin-left:16px;margin-bottom:8px">Cap Rate = (Annual NOI / Purchase Price) × 100</dd>
+          <dt style="font-weight:700">Cash-on-Cash ROI Formula</dt>
+          <dd style="margin-left:16px;margin-bottom:8px">CoC ROI = (Annual Cash Flow / Cash Invested) × 100</dd>
+          <dt style="font-weight:700">Net Operating Income (NOI) Formula</dt>
+          <dd style="margin-left:16px;margin-bottom:8px">NOI = Effective Gross Income − Total Operating Expenses (excluding mortgage)</dd>
+        </dl>
+
+        <h2 style="font-size:1.4rem;font-weight:700;margin:24px 0 12px">Frequently Asked Questions</h2>
+
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:4px">What is a good cap rate for rental property?</h3>
+        <p style="color:#444;margin-bottom:16px">In most US markets, a cap rate of 5–8% is considered good for residential rental properties. Hot markets like NYC or LA may see 3–5%, while Midwest markets can offer 8–12%. Cap rate = NOI / purchase price.</p>
+
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:4px">What is a good cash-on-cash return?</h3>
+        <p style="color:#444;margin-bottom:16px">Most real estate investors target 8%+ CoC ROI as excellent, 5–8% as good, and anything below 0% as a deal to avoid. Cash-on-cash return measures your annual cash profit as a percentage of the cash you put in (down payment + closing costs).</p>
+
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:4px">How do I analyze a rental property?</h3>
+        <p style="color:#444;margin-bottom:16px">Enter the purchase price, financing terms, rental income, and expenses into Deal Wise Rent. The calculator instantly computes cash flow, cap rate, CoC ROI, and projects your equity and returns over 10 years.</p>
+
+        <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:4px">Is this rental property calculator free?</h3>
+        <p style="color:#444;margin-bottom:16px">Yes — Deal Wise Rent is completely free to use with no sign-up required. Create a free account to save and compare multiple deals.</p>
+
+      </main>
+    </div>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
