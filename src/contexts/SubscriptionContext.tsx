@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
+const SUBSCRIPTION_BYPASS = import.meta.env.DEV;
+
 export type Plan = 'free' | 'pro' | 'lifetime';
 
 interface SubscriptionContextType {
@@ -30,11 +32,17 @@ export const useSubscription = () => useContext(SubscriptionContext);
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [plan, setPlan] = useState<Plan>('free');
-  const [isLoading, setIsLoading] = useState(true);
+  const [plan, setPlan] = useState<Plan>(SUBSCRIPTION_BYPASS ? 'lifetime' : 'free');
+  const [isLoading, setIsLoading] = useState(!SUBSCRIPTION_BYPASS);
   const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
   const fetchSubscription = useCallback(async () => {
+    if (SUBSCRIPTION_BYPASS) {
+      setPlan('lifetime');
+      setIsLoading(false);
+      return;
+    }
+
     if (!user) {
       setPlan('free');
       setIsLoading(false);
@@ -70,6 +78,8 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
 
   // Check for ?upgraded=1 redirect from Stripe checkout
   useEffect(() => {
+    if (SUBSCRIPTION_BYPASS) return;
+
     const params = new URLSearchParams(window.location.search);
     if (params.get('upgraded') === '1') {
       // Stripe webhooks may take a few seconds — poll briefly
@@ -94,7 +104,9 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       isLifetime,
       isLoading,
       pricingModalOpen,
-      openPricingModal: () => setPricingModalOpen(true),
+      openPricingModal: () => {
+        if (!SUBSCRIPTION_BYPASS) setPricingModalOpen(true);
+      },
       closePricingModal: () => setPricingModalOpen(false),
       refresh: fetchSubscription,
     }}>
