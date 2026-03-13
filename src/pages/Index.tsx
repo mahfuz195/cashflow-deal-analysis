@@ -5,6 +5,7 @@ import { RentEstimatorTab } from '@/components/RentEstimatorTab';
 import { SavedTab } from '@/components/SavedTab';
 import { SettingsTab } from '@/components/SettingsTab';
 import { DealCoach } from '@/components/DealCoach';
+import { OnboardingTour } from '@/components/OnboardingTour';
 import { useCalculator } from '@/hooks/useCalculator';
 import { SavedCalculation } from '@/types/calculator';
 import { supabase } from '@/integrations/supabase/client';
@@ -137,6 +138,7 @@ const Index = () => {
   return (
     <AppLayout>
       <AppContent />
+      <OnboardingTour />
     </AppLayout>
   );
 };
