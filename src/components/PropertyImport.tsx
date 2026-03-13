@@ -45,6 +45,7 @@ interface WebLookupData {
   source?: string;
   lastSoldPrice?: number;
   lastSoldDate?: string;
+  imageUrl?: string;
 }
 
 interface PropertyData {
@@ -66,7 +67,7 @@ interface PropertyData {
   fetchingWeb?: boolean;
 }
 
-async function fetchWebLookup(address: string): Promise<WebLookupData> {
+async function fetchWebLookup(address: string, url?: string): Promise<WebLookupData> {
   try {
     const res = await fetch(WEB_LOOKUP_URL, {
       method: 'POST',
@@ -74,7 +75,7 @@ async function fetchWebLookup(address: string): Promise<WebLookupData> {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
       },
-      body: JSON.stringify({ address }),
+      body: JSON.stringify({ address, url }),
     });
     if (!res.ok) return {};
     const { webData } = await res.json();
@@ -89,6 +90,7 @@ async function fetchWebLookup(address: string): Promise<WebLookupData> {
       source: typeof webData?.source === 'string' ? webData.source : undefined,
       lastSoldPrice: toNumber(webData?.lastSoldPrice),
       lastSoldDate: typeof webData?.lastSoldDate === 'string' ? webData.lastSoldDate : undefined,
+      imageUrl: typeof webData?.imageUrl === 'string' && webData.imageUrl.startsWith('http') ? webData.imageUrl : undefined,
     };
   } catch {
     return {};
@@ -127,7 +129,7 @@ function extractAddressFromUrl(input: string): string {
     }
     if (url.hostname.includes('realtor.com')) {
       const match = url.pathname.match(/\/realestateandhomes-detail\/([^/]+)/);
-      if (match) return match[1].replace(/_M[\w\d]+$/, '').replace(/_/g, ', ').replace(/-/g, ' ');
+      if (match) return match[1].replace(/_M[\w\d-]+$/, '').replace(/_/g, ', ').replace(/-/g, ' ');
     }
     if (url.hostname.includes('redfin.com')) {
       const parts = url.pathname.split('/').filter(Boolean);
@@ -234,7 +236,7 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
       missingFields.push('maintenanceCapex');
 
       const [webLookup, aiEstimates] = await Promise.all([
-        fetchWebLookup(address),
+        fetchWebLookup(address, input.trim().startsWith('http') ? input.trim() : undefined),
         missingFields.length ? fetchAiEstimates(result, missingFields) : Promise.resolve({}),
       ]);
 
@@ -361,6 +363,7 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
 
               {/* Property card */}
               <div className="rounded-xl border border-border bg-accent/30 overflow-hidden">
+                {/* Address bar */}
                 <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50 bg-accent/40">
                   <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
                   <p className="text-xs font-medium text-foreground leading-snug truncate">{data.address}</p>
@@ -371,8 +374,10 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                   )}
                 </div>
 
-                {/* Price section — web listed price + RentCast last sale */}
-                <div className="px-4 pt-3 pb-3 space-y-3">
+                {/* Price + photo side by side */}
+                <div className="flex">
+                  {/* Price section — left side */}
+                  <div className="flex-1 min-w-0 px-4 pt-3 pb-3 space-y-3">
 
                   {/* Current listing from web search */}
                   <div>
@@ -470,7 +475,25 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
                   {!data.fetchingWeb && !data.webLookup?.listedPrice && !data.webLookup?.estimatedValue && !data.lastSalePrice && !data.assessedValue && (
                     <p className="text-sm text-muted-foreground italic">Price not available — AI will estimate</p>
                   )}
-                </div>
+                  </div>{/* end left price panel */}
+
+                  {/* Property photo — right side */}
+                  {data.webLookup?.imageUrl && (
+                    <div className="w-32 shrink-0 border-l border-border/50 overflow-hidden relative">
+                      <img
+                        src={data.webLookup.imageUrl}
+                        alt={`Front view of ${data.address}`}
+                        className="w-full h-full object-cover"
+                        onError={e => { (e.currentTarget as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                      />
+                      {data.webLookup.source && (
+                        <span className="absolute bottom-1.5 left-0 right-0 text-center text-[9px] font-semibold bg-black/55 text-white py-0.5">
+                          {data.webLookup.source}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>{/* end flex row */}
 
                 <div className="grid grid-cols-3 divide-x divide-border/50 border-t border-border/50 mt-1">
                   {[
