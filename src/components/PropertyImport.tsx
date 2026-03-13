@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { CalculatorState } from '@/types/calculator';
 import { toast } from 'sonner';
 import { AIDealAnalysis } from './AIDealAnalysis';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ESTIMATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/property-estimate`;
 const WEB_LOOKUP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/property-web-lookup`;
@@ -197,6 +198,7 @@ function InfoRow({ label, value, isAi }: { label: string; value: string; isAi?: 
 }
 
 export function PropertyImport({ updateField }: PropertyImportProps) {
+  const { user, openAuthDialog } = useAuth();
   const [open, setOpen] = useState(true); // open by default
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -253,6 +255,10 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
   };
 
   const handleOpenAiAnalysis = () => {
+    if (!user) {
+      openAuthDialog();
+      return;
+    }
     const addr = data?.address ?? extractAddressFromUrl(input.trim());
     if (!addr) return;
     setAiAddress(addr);
