@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Link, MapPin, Download, Home, BedDouble, Bath, DollarSign, ChevronDown, ChevronUp, Loader2, CheckCircle2, Sparkles, Zap, AlertTriangle, Globe, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -196,9 +196,17 @@ function InfoRow({ label, value, isAi }: { label: string; value: string; isAi?: 
   );
 }
 
+interface AddressSuggestion {
+  display_name: string;
+  lat: string;
+  lon: string;
+}
+
 export function PropertyImport({ updateField }: PropertyImportProps) {
   const [open, setOpen] = useState(true); // open by default
   const [input, setInput] = useState('');
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [data, setData] = useState<PropertyData | null>(null);
@@ -208,6 +216,38 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
 
   const apiKey = import.meta.env.VITE_RENTCAST_API_KEY ?? '';
   const canAction = !loading && !!input.trim();
+
+  const searchAddress = useCallback(async (query: string) => {
+    if (query.length < 3) { setSuggestions([]); return; }
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&countrycodes=us&q=${encodeURIComponent(query)}&limit=5`
+      );
+      const data = await res.json();
+      setSuggestions(data);
+    } catch {
+      setSuggestions([]);
+    }
+  }, []);
+
+  const handleInputChange = (val: string) => {
+    setInput(val);
+    setData(null);
+    setImported(false);
+    setError('');
+    // Only show suggestions when not a URL
+    if (val.trim().startsWith('http')) {
+      setSuggestions([]);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchAddress(val), 300);
+  };
+
+  const selectSuggestion = (s: AddressSuggestion) => {
+    setInput(s.display_name);
+    setSuggestions([]);
+  };
 
   const handleFetch = async () => {
     if (!input.trim()) return;
@@ -307,11 +347,26 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
               <input
                 type="text"
                 value={input}
-                onChange={e => { setInput(e.target.value); setData(null); setImported(false); setError(''); }}
-                onKeyDown={e => e.key === 'Enter' && handleFetch()}
+                onChange={e => handleInputChange(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { setSuggestions([]); handleFetch(); } }}
                 placeholder="Paste Zillow / Realtor / Redfin URL — or type a US address..."
                 className="w-full h-11 rounded-lg border border-input bg-background pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               />
+              {suggestions.length > 0 && (
+                <div className="absolute z-20 w-full bg-card border border-border rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto top-full">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className="w-full text-left px-3 py-2.5 text-sm hover:bg-accent transition-colors border-b border-border/50 last:border-0 flex items-start gap-2"
+                      onMouseDown={e => { e.preventDefault(); selectSuggestion(s); }}
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                      <span className="leading-snug">{s.display_name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Side-by-side action buttons */}
