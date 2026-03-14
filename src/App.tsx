@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AuthDialog } from "./components/AuthDialog";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
-import { PricingModal } from "./components/PricingModal";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
@@ -31,7 +30,6 @@ const App = () => (
         <AuthProvider>
           <SubscriptionProvider>
             <AuthDialog />
-            <PricingModal />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth/v1/callback" element={<AuthCallback />} />

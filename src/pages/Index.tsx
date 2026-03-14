@@ -10,13 +10,11 @@ import { useCalculator } from '@/hooks/useCalculator';
 import { SavedCalculation } from '@/types/calculator';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSubscription } from '@/contexts/SubscriptionContext';
 import { toast } from 'sonner';
 
 function AppContent() {
   const { activeTab, setActiveTab } = useAppLayout();
   const { user, openAuthDialog } = useAuth();
-  const { isPro, openPricingModal } = useSubscription();
   const calculator = useCalculator();
   const [saved, setSaved] = useState<SavedCalculation[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(false);
@@ -54,7 +52,6 @@ function AppContent() {
 
   const handleSave = useCallback(async (name: string) => {
     if (!user) { openAuthDialog(); return; }
-    if (!isPro && saved.length >= 3) { openPricingModal(); return; }
 
     const summary = {
       purchasePrice: calculator.state.purchasePrice,
@@ -86,7 +83,7 @@ function AppContent() {
       };
       setSaved(prev => [newCalc, ...prev]);
     }
-  }, [user, openAuthDialog, isPro, openPricingModal, saved.length, calculator.state, calculator.outputs]);
+  }, [user, openAuthDialog, calculator.state, calculator.outputs]);
 
   const handleLoad = useCallback((calc: SavedCalculation) => {
     calculator.loadState(calc.state);
@@ -114,7 +111,7 @@ function AppContent() {
 
   return (
     <>
-      {activeTab === 'calculator' && <CalculatorTab calculator={calculator} onSave={handleSave} onOpenCoach={() => { if (!user) { openAuthDialog(); return; } if (!isPro) { openPricingModal(); return; } openCoachRef.current(); }} />}
+      {activeTab === 'calculator' && <CalculatorTab calculator={calculator} onSave={handleSave} onOpenCoach={() => { if (!user) { openAuthDialog(); return; } openCoachRef.current(); }} />}
       {activeTab === 'rent-estimator' && <RentEstimatorTab onUseRent={handleUseRent} />}
       {activeTab === 'saved' && (
         <SavedTab

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
-const SUBSCRIPTION_BYPASS = import.meta.env.DEV;
+const SUBSCRIPTION_BYPASS = true;
 
 export type Plan = 'free' | 'pro' | 'lifetime';
 
