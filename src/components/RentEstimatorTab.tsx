@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
-import { Search, MapPin, BedDouble, Bath, ArrowRight, TrendingUp, TrendingDown, Minus, BarChart3, Key, Home, Building2 } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { Search, MapPin, BedDouble, Bath, ArrowRight, TrendingUp, TrendingDown, Minus, BarChart3, Home, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import L from 'leaflet';
 
 interface RentEstimatorTabProps {
   onUseRent: (rent: number) => void;
@@ -14,6 +15,24 @@ interface Suggestion {
   lon: string;
 }
 
+interface Comparable {
+  address: string;
+  rent: number;
+  beds: number;
+  baths: number;
+  sqft?: number | null;
+  latitude: number;
+  longitude: number;
+  distance_miles: number;
+  property_url?: string;
+}
+
+interface SubjectProperty {
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
 interface RentResult {
   rent: number;
   rentRangeLow: number;
@@ -21,6 +40,8 @@ interface RentResult {
   rentPerSqft?: number;
   listings: number;
   address?: string;
+  subject: SubjectProperty;
+  comparables: Comparable[];
 }
 
 interface MarketResult {
@@ -97,72 +118,133 @@ function TrendBadge({ pct }: { pct: number }) {
   );
 }
 
-// Simulated API call — replace body with real RentCast fetch when key is provided
 async function fetchRentEstimate(
   address: string,
   bedrooms: number,
   bathrooms: number,
-  apiKey: string,
 ): Promise<RentResult> {
-  if (apiKey) {
-    const params = new URLSearchParams({
-      address,
-      bedrooms: String(bedrooms),
-      bathrooms: String(bathrooms),
-      propertyType: 'Single Family',
-    });
-    const res = await fetch(`https://api.rentcast.io/v1/avm/rent/long-term?${params}`, {
-      headers: { 'X-Api-Key': apiKey, Accept: 'application/json' },
-    });
-    if (!res.ok) throw new Error(`RentCast error ${res.status}`);
-    const data = await res.json();
-    return {
-      rent: Math.round(data.rent ?? 0),
-      rentRangeLow: Math.round(data.rentRangeLow ?? data.rent * 0.85),
-      rentRangeHigh: Math.round(data.rentRangeHigh ?? data.rent * 1.15),
-      listings: data.comparables?.length ?? 0,
-      address: data.address,
-    };
-  }
+  const res = await fetch('https://api.dealwiserent.com/estimate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ address, beds: bedrooms, baths: bathrooms }),
+  });
+  if (!res.ok) throw new Error(`Estimate API error ${res.status}`);
+  const data = await res.json();
+  const est = data.rental_estimate;
+  const mkt = data.market_analysis;
+  const subj = data.subject_property;
 
-  // Mock fallback
-  await new Promise(r => setTimeout(r, 1200));
-  const base = 1000 + bedrooms * 300 + bathrooms * 150 + Math.random() * 500;
+  const comparables: Comparable[] = (data.comparables ?? [])
+    .filter((c: any) => c.latitude && c.longitude && c.rent)
+    .map((c: any) => ({
+      address: c.address,
+      rent: Math.round(c.rent),
+      beds: c.beds,
+      baths: c.baths,
+      sqft: c.sqft ?? null,
+      latitude: c.latitude,
+      longitude: c.longitude,
+      distance_miles: c.distance_miles,
+      property_url: c.property_url,
+    }));
+
   return {
-    rent: Math.round(base),
-    rentRangeLow: Math.round(base * 0.82),
-    rentRangeHigh: Math.round(base * 1.18),
-    rentPerSqft: parseFloat((base / (900 + bedrooms * 200)).toFixed(2)),
-    listings: Math.floor(12 + Math.random() * 30),
-    address,
+    rent: Math.round(est.estimated_monthly_rent ?? 0),
+    rentRangeLow: Math.round(est.estimated_rent_low ?? est.estimated_monthly_rent * 0.9),
+    rentRangeHigh: Math.round(est.estimated_rent_high ?? est.estimated_monthly_rent * 1.1),
+    rentPerSqft: mkt?.price_per_sqft_statistics?.median ?? undefined,
+    listings: mkt?.comparable_count ?? 0,
+    address: subj?.address ?? address,
+    subject: { address: subj?.address ?? address, latitude: subj?.latitude ?? 0, longitude: subj?.longitude ?? 0 },
+    comparables,
   };
 }
 
-async function fetchMarketData(zip: string, apiKey: string): Promise<MarketResult> {
-  if (apiKey) {
-    const res = await fetch(`https://api.rentcast.io/v1/markets?zipCode=${zip}&historyRange=1`, {
-      headers: { 'X-Api-Key': apiKey, Accept: 'application/json' },
-    });
-    if (!res.ok) throw new Error(`RentCast error ${res.status}`);
-    const data = await res.json();
-    const avg = data.averageRent ?? 1500;
-    const med = data.medianRent ?? avg;
-    return {
-      medianRent: Math.round(med),
-      avgRent: Math.round(avg),
-      minRent: Math.round(avg * 0.65),
-      maxRent: Math.round(avg * 1.5),
-      vacancyRate: data.vacancyRate ?? 5.2,
-      daysOnMarket: data.daysOnMarket ?? 18,
-      totalListings: data.totalListings ?? 45,
-      rentTrend: data.rentTrend ?? 3.4,
-      marketCondition: data.vacancyRate < 4 ? 'hot' : data.vacancyRate > 7 ? 'cool' : 'balanced',
-      rentPerSqft: data.averageRentPerSqft ?? parseFloat((avg / 1100).toFixed(2)),
-      zip,
-    };
-  }
+// ── Map ───────────────────────────────────────────────────────────────────────
 
-  // Mock fallback
+function pillIcon(color: string, label: string) {
+  const w = label.length * 7 + 18;
+  return L.divIcon({
+    className: '',
+    iconSize: [w, 24],
+    iconAnchor: [w / 2, 24],
+    popupAnchor: [0, -26],
+    html: `<div style="background:${color};color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.35);border:2px solid rgba(255,255,255,0.85);text-align:center;width:${w}px">${label}</div>`,
+  });
+}
+
+interface RentMapProps {
+  subject: SubjectProperty;
+  comparables: Comparable[];
+  estimatedRent: number;
+}
+
+function RentMap({ subject, comparables, estimatedRent }: RentMapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current || !subject.latitude || !subject.longitude) return;
+
+    // Destroy previous instance if any
+    if (mapRef.current) {
+      mapRef.current.remove();
+      mapRef.current = null;
+    }
+
+    const map = L.map(containerRef.current, { scrollWheelZoom: false })
+      .setView([subject.latitude, subject.longitude], 14);
+    mapRef.current = map;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map);
+
+    // Subject — green
+    L.marker([subject.latitude, subject.longitude], {
+      icon: pillIcon('#16a34a', `$${estimatedRent.toLocaleString()}/mo`),
+    })
+      .addTo(map)
+      .bindPopup(`<b style="color:#16a34a">Subject Property</b><br>${subject.address}<br><b>Est. $${estimatedRent.toLocaleString()}/mo</b>`);
+
+    // Comparables — red
+    comparables.forEach(c => {
+      const popup = [
+        `<b style="color:#dc2626">$${c.rent.toLocaleString()}/mo</b>`,
+        c.address,
+        `${c.beds}bd · ${c.baths}ba${c.sqft ? ` · ${Math.round(c.sqft)} sqft` : ''}`,
+        `${c.distance_miles.toFixed(2)} mi away`,
+        c.property_url ? `<a href="${c.property_url}" target="_blank" style="color:#2563eb">View listing →</a>` : '',
+      ].filter(Boolean).join('<br>');
+
+      L.marker([c.latitude, c.longitude], {
+        icon: pillIcon('#dc2626', `$${c.rent.toLocaleString()}`),
+      })
+        .addTo(map)
+        .bindPopup(popup);
+    });
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [subject.latitude, subject.longitude, comparables, estimatedRent]);
+
+  if (!subject.latitude || !subject.longitude) return null;
+
+  return (
+    <div
+      ref={containerRef}
+      className="rounded-xl border border-border overflow-hidden"
+      style={{ height: 380, width: '100%' }}
+    />
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function fetchMarketData(zip: string): Promise<MarketResult> {
   await new Promise(r => setTimeout(r, 1000));
   const med = 1300 + Math.random() * 700;
   const vacancy = 3 + Math.random() * 8;
@@ -183,9 +265,6 @@ async function fetchMarketData(zip: string, apiKey: string): Promise<MarketResul
 
 export function RentEstimatorTab({ onUseRent }: RentEstimatorTabProps) {
   const [mode, setMode] = useState<Mode>('address');
-  const [apiKey, setApiKey] = useState(import.meta.env.VITE_RENTCAST_API_KEY ?? '');
-  const [showKey, setShowKey] = useState(false);
-  const hasEnvKey = !!import.meta.env.VITE_RENTCAST_API_KEY;
 
   // Address mode
   const [address, setAddress] = useState('');
@@ -231,12 +310,12 @@ export function RentEstimatorTab({ onUseRent }: RentEstimatorTabProps) {
     try {
       if (mode === 'address') {
         if (!selectedAddress) { setError('Please select an address from the suggestions.'); setLoading(false); return; }
-        const res = await fetchRentEstimate(selectedAddress, bedrooms, bathrooms, apiKey);
+        const res = await fetchRentEstimate(selectedAddress, bedrooms, bathrooms);
         setRentResult(res);
         setMarketResult(null);
       } else {
         if (!zip.match(/^\d{5}$/)) { setError('Please enter a valid 5-digit ZIP code.'); setLoading(false); return; }
-        const res = await fetchMarketData(zip, apiKey);
+        const res = await fetchMarketData(zip);
         setMarketResult(res);
         setRentResult(null);
       }
@@ -276,36 +355,6 @@ export function RentEstimatorTab({ onUseRent }: RentEstimatorTabProps) {
           </button>
         ))}
       </div>
-
-      {/* RentCast API Key */}
-      {!hasEnvKey && (
-        <div className="bg-card rounded-lg border border-border p-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Key className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="text-xs font-semibold text-muted-foreground">RentCast API Key</span>
-              <span className="text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-medium">Optional</span>
-            </div>
-            <button onClick={() => setShowKey(p => !p)} className="text-[10px] text-primary hover:underline">
-              {showKey ? 'Hide' : 'Show'}
-            </button>
-          </div>
-          {showKey && (
-            <input
-              type="text"
-              value={apiKey}
-              onChange={e => setApiKey(e.target.value)}
-              placeholder="Paste your RentCast API key for live data..."
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs focus:outline-none focus:ring-2 focus:ring-ring font-mono"
-            />
-          )}
-          {!showKey && (
-            <p className="text-[10px] text-muted-foreground">
-              {apiKey ? '● Key set — using live RentCast data' : 'Without a key, results are simulated estimates. Get a free key at rentcast.io.'}
-            </p>
-          )}
-        </div>
-      )}
 
       {/* Input Form */}
       <div className="bg-card rounded-lg border border-border p-5 space-y-4">
@@ -442,10 +491,28 @@ export function RentEstimatorTab({ onUseRent }: RentEstimatorTabProps) {
             />
           </div>
 
-          {!apiKey && (
-            <p className="text-[10px] text-muted-foreground/60 text-center">
-              ⚠ Simulated data — add a RentCast API key for live market estimates
-            </p>
+          {/* Comparables Map */}
+          {rentResult.comparables.length > 0 && rentResult.subject.latitude !== 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5" />
+                Comparable Rentals Map
+                <span className="font-normal normal-case">· {rentResult.comparables.length} properties</span>
+              </p>
+              <RentMap
+                subject={rentResult.subject}
+                comparables={rentResult.comparables}
+                estimatedRent={rentResult.rent}
+              />
+              <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-3 h-3 rounded-sm bg-green-600" /> Subject property (estimated)
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-3 h-3 rounded-sm bg-red-600" /> Active comparable listings
+                </span>
+              </div>
+            </div>
           )}
 
           <Button
@@ -498,12 +565,6 @@ export function RentEstimatorTab({ onUseRent }: RentEstimatorTabProps) {
             />
             <StatCard label="Annual Gross" value={`$${(marketResult.medianRent * 12).toLocaleString()}`} sub="median income" />
           </div>
-
-          {!apiKey && (
-            <p className="text-[10px] text-muted-foreground/60 text-center">
-              ⚠ Simulated data — add a RentCast API key above for live market data
-            </p>
-          )}
 
           <Button
             onClick={() => {

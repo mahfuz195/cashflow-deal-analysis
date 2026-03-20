@@ -1,4 +1,10 @@
+@import 'leaflet/dist/leaflet.css';
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* Leaflet map — fix z-index conflicts with app UI */
+.leaflet-container { z-index: 0; }
+.leaflet-pane { z-index: 0 !important; }
+.leaflet-top, .leaflet-bottom { z-index: 1 !important; }
 
 @tailwind base;
 @tailwind components;
