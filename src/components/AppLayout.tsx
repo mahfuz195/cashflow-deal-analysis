@@ -266,6 +266,90 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {/* ── Main Content ── */}
         <main className="flex-1 pb-16 md:pb-0">
           {children}
+
+          {/* ── Footer ── */}
+          <footer className="border-t border-border/60 bg-muted/20 mt-8">
+            <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10">
+
+              {/* Top row: brand + links */}
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8">
+                {/* Brand */}
+                <div className="space-y-2 max-w-xs">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: 'linear-gradient(135deg, hsl(263 80% 58%), hsl(245 80% 60%))' }}
+                    >
+                      <DollarSign className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="font-black text-foreground tracking-tight">Deal Wise Rent</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    AI-powered rental property analysis tools for independent real estate investors. Free, fast, and built for serious deal evaluation.
+                  </p>
+                </div>
+
+                {/* Link columns */}
+                <div className="flex flex-wrap gap-8 text-sm">
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Tools</p>
+                    {[
+                      { label: 'Deal Analyzer',   tab: 'calculator'     as const },
+                      { label: 'Rent Estimator',  tab: 'rent-estimator' as const },
+                      { label: 'Saved Deals',     tab: 'saved'          as const },
+                      { label: 'Settings',        tab: 'settings'       as const },
+                    ].map(({ label, tab }) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Company</p>
+                    <button
+                      onClick={() => setContactOpen(true)}
+                      className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Contact Us
+                    </button>
+                    <a
+                      href="https://apps.apple.com/us/app/cash-flow-rental/id6757372799"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      iOS App
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-border/50 pt-6 space-y-4">
+
+                {/* Legal disclaimer */}
+                <p className="text-[11px] text-muted-foreground leading-relaxed max-w-4xl">
+                  <span className="font-semibold text-foreground/70">Disclaimer:</span> All calculations, projections, and analyses provided by Deal Wise Rent are for informational and educational purposes only. They do not constitute financial, investment, tax, or legal advice. Real estate investing involves significant risk, including the possible loss of principal. Past performance is not indicative of future results. Always consult a licensed real estate agent, certified financial planner, tax professional, and/or attorney before making any investment decisions. Deal Wise Rent LLC is not a registered investment advisor or broker-dealer.
+                </p>
+
+                {/* Copyright row */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <p className="text-[11px] text-muted-foreground">
+                    &copy; {new Date().getFullYear()} <span className="font-semibold text-foreground/70">Deal Wise Rent LLC</span>. All rights reserved.
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Made with care for independent real estate investors.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </footer>
         </main>
 
         {/* ── Mobile Bottom Tab Bar ── */}
