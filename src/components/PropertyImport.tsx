@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CalculatorState } from '@/types/calculator';
 import { toast } from 'sonner';
-import { AIDealAnalysis } from './AIDealAnalysis';
 
 const ESTIMATE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/property-estimate`;
 const WEB_LOOKUP_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/property-web-lookup`;
@@ -33,6 +32,7 @@ async function fetchAiEstimates(
 
 interface PropertyImportProps {
   updateField: <K extends keyof CalculatorState>(field: K, value: CalculatorState[K]) => void;
+  onOpenAiAnalysis: (address: string, propertyData: PropertyData) => void;
 }
 
 interface WebLookupData {
@@ -202,7 +202,7 @@ interface AddressSuggestion {
   lon: string;
 }
 
-export function PropertyImport({ updateField }: PropertyImportProps) {
+export function PropertyImport({ updateField, onOpenAiAnalysis }: PropertyImportProps) {
   const [open, setOpen] = useState(true); // open by default
   const [input, setInput] = useState('');
   const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
@@ -211,8 +211,6 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
   const [error, setError] = useState('');
   const [data, setData] = useState<PropertyData | null>(null);
   const [imported, setImported] = useState(false);
-  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
-  const [aiAddress, setAiAddress] = useState('');
 
   const apiKey = import.meta.env.VITE_RENTCAST_API_KEY ?? '';
   const canAction = !loading && !!input.trim();
@@ -295,8 +293,7 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
   const handleOpenAiAnalysis = () => {
     const addr = data?.address ?? extractAddressFromUrl(input.trim());
     if (!addr) return;
-    setAiAddress(addr);
-    setShowAiAnalysis(true);
+    onOpenAiAnalysis(addr, data ?? { address: addr });
   };
 
   const handleImport = () => {
@@ -675,15 +672,6 @@ export function PropertyImport({ updateField }: PropertyImportProps) {
         </div>
       )}
 
-      {/* AI Deal Analysis modal */}
-      {showAiAnalysis && (
-        <AIDealAnalysis
-          address={aiAddress}
-          propertyData={data ?? { address: aiAddress }}
-          updateField={updateField}
-          onClose={() => setShowAiAnalysis(false)}
-        />
-      )}
     </div>
   );
 }
