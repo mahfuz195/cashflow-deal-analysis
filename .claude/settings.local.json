@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"c:/Users/islam01/Desktop/2026/mhafuz/app_devs/cash_flow_web/cashflow-deal-analysis/public/downloads\")",
+      "Bash(cp \"c:/Users/islam01/Desktop/2026/mhafuz/app_devs/cash_flow_web/cashflow-deal-analysis/downloads/DealWiseRent_Pro_Calculator.xlsx\" \"c:/Users/islam01/Desktop/2026/mhafuz/app_devs/cash_flow_web/cashflow-deal-analysis/public/downloads/DealWiseRent_Pro_Calculator.xlsx\")"
+    ]
+  }
+}

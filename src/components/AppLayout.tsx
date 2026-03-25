@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { Calculator, Home, Bookmark, Settings, DollarSign, LogOut, User, Smartphone, Mail, X, Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { DownloadCalculatorCard } from './DownloadCalculatorCard';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -265,6 +266,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* ── Main Content ── */}
         <main className="flex-1 pb-16 md:pb-0">
+          {/* Download Calculator Banner */}
+          <div className="max-w-7xl mx-auto px-4 md:px-6 pt-4">
+            <DownloadCalculatorCard />
+          </div>
+
           {children}
 
           {/* ── Footer ── */}

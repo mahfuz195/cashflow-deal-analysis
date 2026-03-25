@@ -8,6 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { AuthDialog } from "./components/AuthDialog";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import Index from "./pages/Index";
+import DownloadSuccess from "./pages/DownloadSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <AuthDialog />
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/download-success" element={<DownloadSuccess />} />
               <Route path="/auth/v1/callback" element={<AuthCallback />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
