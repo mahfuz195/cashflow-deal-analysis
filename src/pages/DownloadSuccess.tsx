@@ -10,14 +10,22 @@ export default function DownloadSuccess() {
   const [downloaded, setDownloaded] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const link = document.createElement('a');
-      link.href = FILE_PATH;
-      link.download = FILE_NAME;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setDownloaded(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(FILE_PATH);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = FILE_NAME;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        setDownloaded(true);
+      } catch {
+        setDownloaded(true); // still show the manual button
+      }
     }, 800);
     return () => clearTimeout(timer);
   }, []);
@@ -82,14 +90,24 @@ export default function DownloadSuccess() {
                 <p className="text-sm font-bold text-foreground">Pro Calculator Spreadsheet</p>
                 <p className="text-xs text-muted-foreground">DealWiseRent_Pro_Calculator.xlsx</p>
               </div>
-              <a
-                href={FILE_PATH}
-                download={FILE_NAME}
+              <button
+                onClick={async () => {
+                  const res = await fetch(FILE_PATH);
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = FILE_NAME;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  URL.revokeObjectURL(url);
+                }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white btn-gradient shadow-sm hover:shadow-md transition-all whitespace-nowrap"
               >
                 <Download className="w-3.5 h-3.5" />
                 Download
-              </a>
+              </button>
             </div>
           </div>
 
