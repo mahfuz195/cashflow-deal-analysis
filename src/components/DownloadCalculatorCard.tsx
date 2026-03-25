@@ -1,7 +1,7 @@
 import { Download, FileSpreadsheet, ShieldCheck, Star } from 'lucide-react';
 
 // Paste your Stripe Payment Link here
-const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_fZu8wPd7Z1d1fuh8tQgEg00';
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/dRmbJ1c3R15BbZA26Gbwk00';
 
 const features = [
   'Full cash flow & cap rate analysis',
